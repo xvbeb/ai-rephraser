@@ -1,0 +1,468 @@
+/* Базовые переменные — сделал чуть мягче неон */
+:root {
+  --bg: #0b0b18;
+  --text: #e8e8ff;
+  --text-muted: #b0b0d0;
+  --primary: #00d4ff;        /* мягкий cyan */
+  --primary-glow: #00d4ff55;
+  --accent: #a020f0;         /* мягкий пурпур */
+  --card: #141426;
+  --border: #2a2a45;
+  --glow-sm: 0 0 10px var(--primary-glow);
+  --glow-md: 0 0 20px var(--primary-glow), 0 0 40px var(--primary-glow);
+}
+
+[data-theme="light"] {
+  --bg: #f5f8ff;
+  --card: #ffffff;
+  --text: #1e1e40;
+  --text-muted: #6b7280;
+  --primary: #0066cc;
+  --accent: #7c3aed;
+  --border: #d1d5db;
+  --glow-sm: 0 0 8px rgba(0, 102, 204, 0.3);
+  --glow-md: 0 0 16px rgba(0, 102, 204, 0.4);
+}
+
+/* Общие сбросы */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 1.5rem;
+  transition: background 0.4s ease, color 0.4s ease;
+}
+
+.container {
+  max-width: 1400px; /* увеличил для двух колонок */
+  margin: 0 auto;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.logo-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.logo {
+  font-size: 2.5rem;
+  color: var(--primary);
+  text-shadow: var(--glow-sm);
+}
+
+h1 {
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  background: linear-gradient(90deg, var(--primary), var(--accent), #ff6bcb, var(--primary));
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: var(--glow-sm);
+  animation: gradientFlow 12s linear infinite;
+}
+
+@keyframes gradientFlow {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+#theme-toggle {
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+
+#theme-toggle:hover {
+  transform: scale(1.2);
+}
+
+/* Главный layout: две колонки */
+.main-layout {
+  display: flex;
+  gap: 2rem;
+  margin-top: 1rem;
+  min-height: calc(100vh - 140px);
+}
+
+.left-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Чат-контейнер занимает фиксированную высоту и имеет свой скролл */
+.right-column {
+  flex: 0 0 420px;
+  height: 80vh;                     /* или calc(100vh - 120px) — подгони под свой header */
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  box-shadow: var(--glow-sm);
+}
+
+/* Адаптив — на узких экранах чат вниз */
+@media (max-width: 1100px) {
+  .main-layout {
+    flex-direction: column;
+  }
+    .right-column {
+    height: 50vh;                   /* или 60vh — подгони */
+    max-height: 70vh;
+  } 
+}
+
+/* Textarea */
+textarea {
+  width: 100%;
+  padding: 1.2rem;
+  font-size: 1.15rem;
+  line-height: 1.6;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  resize: vertical;
+  min-height: 160px;
+  transition: all 0.3s ease;
+}
+
+[data-theme="dark"] textarea {
+  color: #f0f0ff;
+  background: #1e1e38;
+}
+
+textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: var(--glow-md);
+}
+
+textarea::placeholder {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+/* Controls */
+.controls.centered {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+#toneSelect {
+  padding: 0.9rem 1.2rem;
+  font-size: 1rem;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  min-width: 200px;
+}
+
+#sendBtn {
+  padding: 1rem 2.8rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: var(--glow-sm);
+  transition: all 0.3s ease;
+}
+
+#sendBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--glow-md);
+}
+
+/* Результат */
+.result-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: var(--glow-sm);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+#resultContent {
+  flex: 1;
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.copy-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.6rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: color 0.2s;
+}
+
+.copy-btn:hover,
+.copy-btn.copied {
+  color: var(--primary);
+}
+
+/* Чат */
+.chat-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Сам блок сообщений — скроллится внутри */
+.chat-messages {
+  flex: 1 1 auto;
+  overflow-y: auto;                 /* ← вот он, скролл только здесь */
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  scrollbar-width: thin;            /* тонкий скроллбар в Firefox */
+}
+
+/* Стили для скроллбара (Chrome/Edge) */
+.chat-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  background: var(--border);
+  border-radius: 10px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 10px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+.message {
+  padding: 1rem 1.4rem;
+  border-radius: 18px;
+  max-width: 80%;
+  line-height: 1.5;
+}
+
+.message.user {
+  background: var(--primary);
+  color: white;
+  align-self: flex-end;
+  border-bottom-right-radius: 6px;
+}
+
+.message.assistant {
+  background: #22223a;
+  color: var(--text);
+  align-self: flex-start;
+  border-bottom-left-radius: 6px;
+}
+
+.chat-input {
+  padding: 1rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 0.8rem;
+}
+
+#chatInput {
+  flex: 1;
+  padding: 0.9rem 1.2rem;
+  font-size: 1rem;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+#sendChatBtn {
+  padding: 0.9rem 1.8rem;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.lang-switch {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.lang-btn {
+  padding: 0.5rem 1.1rem;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.lang-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+/* Loading */
+.loading::before {
+  content: "ИИ думает...";
+  display: block;
+  text-align: center;
+  color: var(--primary);
+  animation: pulse 1.5s infinite;
+}
+
+.chat-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.clear-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: color 0.2s, transform 0.2s;
+}
+
+.clear-btn:hover {
+  color: #ff6b6b;
+  transform: scale(1.15);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* Полноэкранный лоадер */
+.loader-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  transition: opacity 0.8s ease;
+}
+
+.loader-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.loader-content {
+  text-align: center;
+  position: relative;
+}
+
+.neon-logo {
+  font-size: 6rem;
+  font-weight: bold;
+  background: linear-gradient(90deg, var(--primary), var(--accent), #ff6bcb, var(--primary));
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gradientFlow 8s ease infinite, pulseText 2.5s infinite alternate;
+  text-shadow: 0 0 30px var(--primary-glow), 0 0 60px var(--accent)40%;
+  margin-bottom: 1.5rem;
+}
+
+.pulse-container {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 1.5rem;
+}
+
+.pulse-ring {
+  position: absolute;
+  inset: 0;
+  border: 6px solid var(--primary);
+  border-radius: 50%;
+  opacity: 0;
+  transform: scale(0.5);
+  animation: pulseRing 2.8s infinite ease-out;
+}
+
+.pulse-ring.delay-1 { animation-delay: 0.7s; border-color: var(--accent); }
+.pulse-ring.delay-2 { animation-delay: 1.4s; border-color: #ff6bcb; }
+
+.loader-text {
+  font-size: 1.6rem;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+  opacity: 0.9;
+  animation: pulseText 3s infinite alternate;
+}
+
+/* Анимации */
+@keyframes pulseRing {
+  0%   { transform: scale(0.2); opacity: 0.8; }
+  50%  { transform: scale(1.5); opacity: 0.4; }
+  100% { transform: scale(3);   opacity: 0;   }
+}
+
+@keyframes pulseText {
+  0%   { opacity: 0.6; }
+  100% { opacity: 1;   }
+}
+
+@keyframes gradientFlow {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}

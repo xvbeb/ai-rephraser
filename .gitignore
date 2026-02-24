@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+*.pyd
+
+# Окружения
+.venv/
+venv/
+ENV/
+env/
+
+# Переменные окружения
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# PyQt кэш и сборка
+*.qmlc
+*.qrc
+*.rcc
+*.ts
+*.qm
+
+# Логи и временные файлы
+*.log
+*.tmp
+*.bak
+*.swp
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Windows
+Thumbs.db
+ehthumbs.db
+desktop.ini

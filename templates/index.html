@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ru" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Переписыватель | Neon Edition</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <!-- Полноэкранный лоадер -->
+  <div id="loader" class="loader-overlay">
+    <div class="loader-content">
+      <div class="neon-logo">Neon</div>
+      <div class="pulse-container">
+        <div class="pulse-ring"></div>
+        <div class="pulse-ring delay-1"></div>
+        <div class="pulse-ring delay-2"></div>
+      </div>
+      <p class="loader-text">Загружаем ИИ-магию... ⚡</p>
+    </div>
+  </div>
+  <div class="container">
+    <header class="header">
+      <div class="logo-title">
+        <span class="logo">⚡</span>
+        <h1>AI — улучши текст</h1>
+      </div>
+      <button id="theme-toggle" aria-label="Переключить тему">🌙</button>
+    </header>
+
+    <main class="main-layout">
+      <!-- Левая колонка: основная работа -->
+      <div class="left-column">
+        <textarea
+          id="inputText"
+          placeholder="Вставь сюда текст... (русский / английский / смешанный)"
+          rows="6"
+        ></textarea>
+
+        <div class="controls centered">
+          <select id="toneSelect">
+            <option value="neutral">Нейтральный</option>
+            <option value="formal">Формальный / деловой</option>
+            <option value="bydlo">Быдло ебаное</option>
+            <option value="professional">Профессиональный</option>
+            <option value="creative">Креативный / яркий</option>
+          </select>
+          <button id="sendBtn">Исправить →</button>
+        </div>
+
+        <div id="result" class="result-card">
+          <div class="result-header">
+            <h3>Результат</h3>
+            <button id="copyBtn" class="copy-btn" title="Скопировать">📋</button>
+          </div>
+          <pre id="resultContent" class="placeholder">
+            Здесь появится улучшенный текст + объяснение
+          </pre>
+        </div>
+      </div>
+
+      <!-- Правая колонка: чат -->
+      <aside class="right-column chat-container">
+        <div class="chat-header">
+          <h2>Чат с ИИ</h2>
+          <div class="chat-controls">
+            <div class="lang-switch">
+              <button class="lang-btn active" data-lang="ru">RU</button>
+              <button class="lang-btn" data-lang="en">EN</button>
+              <button class="lang-btn" data-lang="ua">UA</button>
+            </div>
+            <button id="clearChatBtn" class="clear-btn" title="Очистить чат">🗑️</button>
+          </div>
+        </div>
+
+        <div id="chatMessages" class="chat-messages"></div>
+
+        <div class="chat-input">
+          <input type="text" id="chatInput" placeholder="Напиши сообщение ИИ..." />
+          <button id="sendChatBtn">Отправить</button>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>
