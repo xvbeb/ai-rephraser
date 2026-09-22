@@ -35,6 +35,7 @@
           id="inputText"
           placeholder="Вставь сюда текст... (русский / английский / смешанный)"
           rows="6"
+          maxlength="12000"
         ></textarea>
 
         <div class="controls centered">
@@ -54,8 +55,12 @@
             <button id="copyBtn" class="copy-btn" title="Скопировать">📋</button>
           </div>
           <pre id="resultContent" class="placeholder">
-            Здесь появится улучшенный текст + объяснение
+            Здесь появится улучшенный текст
           </pre>
+          <details id="changesDetails" hidden>
+            <summary>Что изменилось</summary>
+            <ul id="changesList"></ul>
+          </details>
         </div>
       </div>
 
@@ -76,7 +81,7 @@
         <div id="chatMessages" class="chat-messages"></div>
 
         <div class="chat-input">
-          <input type="text" id="chatInput" placeholder="Напиши сообщение ИИ..." />
+          <input type="text" id="chatInput" maxlength="12000" placeholder="Напиши сообщение ИИ..." />
           <button id="sendChatBtn">Отправить</button>
         </div>
       </aside>

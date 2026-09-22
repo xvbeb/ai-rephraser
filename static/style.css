@@ -466,3 +466,10 @@ textarea::placeholder {
   50%  { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
+/* Structured changes and streamed plain text. */
+#changesDetails { margin-top: 1rem; color: var(--text-muted); }
+#changesDetails summary { cursor: pointer; }
+#changesList { padding-left: 1.4rem; margin-top: 0.6rem; }
+.message { white-space: pre-wrap; overflow-wrap: anywhere; }
+.error { color: #ff6b6b; }
+button:disabled { opacity: 0.55; cursor: wait; }

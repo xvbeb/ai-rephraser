@@ -42,3 +42,10 @@ env/
 Thumbs.db
 ehthumbs.db
 desktop.ini
+.env.*
+!.env.example
+.pytest_cache/
+.coverage
+htmlcov/
+.DS_Store
+work/

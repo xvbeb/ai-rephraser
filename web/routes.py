@@ -1,102 +1,123 @@
-# web/routes.py
-from flask import render_template, request, jsonify, session
+import json
+import secrets
+from dataclasses import asdict
+from collections.abc import Iterator
 
-# ──── вот эти две строки ────
-from .app import app                     # ← импортируем app из этого же пакета web/
+from flask import Blueprint, Response, current_app, jsonify, render_template, request, session
 
-from core.config import GROQ_API_KEY
-from core.groq import call_groq
-from core.prompts import tone_descriptions, build_rephrase_prompt
+from core.conversations import ConversationStore
+from core.errors import AIError
+from core.llm import Message
+from core.prompts import TONES
+from core.service import RephraseService, validate_input
 
-GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
+routes = Blueprint("main", __name__)
 
-headers = {
-    "Authorization": f"Bearer {GROQ_API_KEY}",
-    "Content-Type": "application/json"
-}
 
-@app.route("/")
-def index():
+def dependencies() -> tuple[RephraseService, ConversationStore, str]:
+    if "conversation_id" not in session:
+        session["conversation_id"] = secrets.token_urlsafe(32)
+    return (current_app.extensions["rephrase_service"],
+            current_app.extensions["conversations"], session["conversation_id"])
+
+
+def serialize(messages: list[Message]) -> list[dict]:
+    return [asdict(message) for message in messages]
+
+
+@routes.get("/")
+def index() -> str:
     return render_template("index.html")
 
 
-# /rephrase — теперь возвращает ТОЛЬКО исправленный текст
-@app.route("/rephrase", methods=["POST"])
-def rephrase():
-    data = request.get_json()
-    text = data.get("text", "").strip()
-    tone = data.get("tone", "neutral")
+@routes.post("/rephrase")
+def rephrase() -> Response:
+    text, tone = validate_input(request.get_json(), "text")
+    service, store, sid = dependencies()
+    with store.lease(sid) as conversation:
+        result = service.rephrase(text, tone)
+        # A new source text starts a new refinement conversation.
+        store.commit(conversation, [Message("user", text), Message("assistant", result.rewritten_text)])
+    return jsonify(result.model_dump())
 
-    if not text:
-        return jsonify({"error": "Текст пустой"}), 400
 
-    prompt = build_rephrase_prompt(text, tone)
+@routes.route("/chat", methods=["GET", "POST"])
+def chat() -> Response:
+    if request.method == "GET":
+        _, store, sid = dependencies()
+        return jsonify(history=serialize(store.read(sid)))
+    text, tone = validate_input(request.get_json(), "message")
+    service, store, sid = dependencies()
+    with store.lease(sid) as conversation:
+        answer = "".join(service.refine(conversation.messages, text, tone))
+        store.commit(conversation, [*conversation.messages, Message("user", text), Message("assistant", answer)])
+        return jsonify(history=serialize(conversation.messages))
 
-    full_response = call_groq(prompt)
 
-    # Парсим ответ — берём только "Исправленный текст:"
+def event(kind: str, **data: object) -> str:
+    return f"event: {kind}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+
+@routes.post("/chat/stream")
+def chat_stream() -> Response:
+    text, tone = validate_input(request.get_json(), "message")
+    service, store, sid = dependencies()
+    lease = store.lease(sid)
+    conversation = lease.__enter__()
+    stream = service.refine(conversation.messages, text, tone)
+    # Prime the stream before headers are sent so initial failures use HTTP errors.
     try:
-        corrected_text = full_response.split("Исправленный текст:")[1].split("Объяснение изменений:")[0].strip()
-    except:
-        corrected_text = full_response  # если парсинг сломался — возвращаем всё
+        first = next(stream)
+    except BaseException:
+        lease.__exit__(None, None, None)
+        stream.close()
+        raise
 
-    # Добавляем полный ответ в чат-историю как первое сообщение от ИИ
-    if "chat_history" not in session:
-        session["chat_history"] = []
+    logger = current_app.logger
+    closed = False
 
-    session["chat_history"].append({"role": "user", "content": text})
-    session["chat_history"].append({"role": "assistant", "content": full_response})
-    session.modified = True
+    def cleanup() -> None:
+        nonlocal closed
+        if not closed:
+            closed = True
+            try:
+                stream.close()
+            finally:
+                lease.__exit__(None, None, None)
 
-    return jsonify({"result": corrected_text})  # только исправленный текст
+    def generate() -> Iterator[str]:
+        chunks = [first]
+        try:
+            yield event("delta", text=first)
+            for chunk in stream:
+                chunks.append(chunk)
+                yield event("delta", text=chunk)
+            answer = "".join(chunks)
+            store.commit(conversation, [*conversation.messages, Message("user", text), Message("assistant", answer)])
+            yield event("done", history=serialize(conversation.messages))
+        except AIError as error:
+            yield event("error", error=error.message, code=error.code)
+        except Exception as error:
+            logger.error("Unhandled stream error: %s", type(error).__name__)
+            yield event("error", error="Ошибка при получении ответа.", code="internal_error")
+        finally:
+            cleanup()
 
-
-@app.route("/chat", methods=["GET", "POST"])
-def chat():
-    if "chat_history" not in session:
-        session["chat_history"] = []
-
-    if request.method == "POST":
-        data = request.get_json()
-        user_message = data.get("message", "").strip()
-
-        if user_message:
-            session["chat_history"].append({"role": "user", "content": user_message})
-
-            tone = data.get("tone", "neutral")  # можно передать тон из фронта
-            tone_desc = tone_descriptions.get(tone, "Нейтральный тон по умолчанию.")
-
-            system_prompt = f"""
-Ты эксперт по стилистике и грамматике.
-Текущий тон: {tone_desc}
-Ты помнишь ВСЮ предыдущую беседу.
-Всегда отвечай с учётом всей истории сообщений.
-Если пользователь спрашивает о чём-то из прошлого — ссылайся на это явно.
-"""
-
-            messages = [
-                {"role": "system", "content": system_prompt}
-            ] + session["chat_history"]
-
-            full_answer = call_groq(
-                prompt="\n".join([m["content"] for m in messages]),  # вся история
-                temperature=0.7,
-                max_tokens=1500
-            )
-
-            session["chat_history"].append({"role": "assistant", "content": full_answer})
-            session.modified = True
-
-    return jsonify({"history": session["chat_history"]})
+    response = Response(generate(), mimetype="text/event-stream", headers={
+        "Cache-Control": "no-cache, no-store", "X-Accel-Buffering": "no",
+    })
+    response.call_on_close(cleanup)
+    return response
 
 
-# Очистка чата (уже добавляли)
-@app.route("/chat/clear", methods=["POST"])
-def clear_chat():
-    session.pop("chat_history", None)
-    return jsonify({"status": "cleared"})
+@routes.post("/chat/clear")
+def clear_chat() -> Response:
+    _, store, sid = dependencies()
+    with store.lease(sid) as conversation:
+        store.commit(conversation, [])
+    return jsonify(status="cleared")
 
-# Если хочешь — можно вынести tone_descriptions в отдельный эндпоинт
-@app.route("/tones", methods=["GET"])
-def get_tones():
-    return jsonify({"tones": list(tone_descriptions.keys())})
+
+@routes.get("/tones")
+def get_tones() -> Response:
+    return jsonify(tones=list(TONES))
